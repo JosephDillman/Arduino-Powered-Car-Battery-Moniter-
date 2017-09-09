@@ -1,0 +1,67 @@
+float voltIn;
+const float WARNING=12.1;
+const float CRITICAL=11.8;
+bool sendMessage = true;
+int index=0;
+int ledPin=2;
+int ledPin2=5;
+int R1=986; //Resistor Values
+int R2=9900;
+int i;
+float voltAvg=0;
+
+void setup() 
+{
+  pinMode(ledPin,OUTPUT);
+  pinMode(ledPin2,OUTPUT);
+  digitalWrite(ledPin,LOW);
+  digitalWrite(ledPin2,LOW);
+  Serial.begin(9600);
+}
+void loop() 
+{
+  //Takes 10 measurements and averages them
+  voltAvg = 0;
+  for(i=0;i<10;i++)
+  {
+  voltIn=analogRead(A5);
+  voltAvg += voltIn;
+  delay(10);
+  }
+  voltIn = voltAvg/10; 
+  
+  voltIn = voltIn*5.015/1024; //Translates large number into real volts
+  voltIn = voltIn*(R1+R2)/R1; //Adjusts for voltage divider
+  Serial.print(voltIn);
+  Serial.print("\n");
+  
+  if (voltIn>WARNING)
+  {
+    sendMessage = true;
+    digitalWrite(ledPin,LOW);
+    digitalWrite(ledPin2,LOW);
+  } 
+  
+  if (voltIn<=WARNING && voltIn>CRITICAL && sendMessage==true) //If volts is warning, Light up LED 1
+  {/*send critical message to the modem*/
+     sendMessage = false;
+     digitalWrite(ledPin,HIGH);
+   }
+   
+   if (voltIn<=CRITICAL && sendMessage == false) //If volts is critical, light up LED 2
+   {
+    /*send critical message to the modem*/
+    sendMessage = false;
+    digitalWrite(ledPin2,HIGH);
+    digitalWrite(ledPin,LOW);
+    }
+    
+    if(voltIn == 0) //If there is no voltage measured, reset LEDs
+    {
+      digitalWrite(ledPin2, LOW);
+      digitalWrite(ledPin2, LOW);
+      sendMessage = true;
+    }
+
+    delay(4000);
+  }
